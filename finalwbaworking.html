@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WBA Pro — Precision Extractor</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-html.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-js.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+/* ── ROOT TOKENS ─────────────────────────────────────────────── */
+:root {
+  --bg:       #e8edf5;
+  --bg2:      #f0f4fb;
+  --text:     #3d4a5c;
+  --text2:    #6b7a90;
+  --primary:  #5b7df5;
+  --primary2: #4a68e0;
+  --html-c:   #e34c26;
+  --css-c:    #264de4;
+  --js-c:     #c9a820;
+  --tweek-c:  #7c3aed;
+  --danger:   #e04040;
+  --success:  #2db87a;
+  --shd-l:    #ffffff;
+  --shd-d:    #c8d0e0;
+  --shd-dl:   rgba(200,208,224,0.7);
+  --radius-xl: 32px;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --font: 'Nunito', system-ui, sans-serif;
+}
+
+/* ── RESET ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+}
+
+/* ── NEUMORPH HELPERS ────────────────────────────────────────── */
+.nm-out {
+  box-shadow: 8px 8px 18px var(--shd-d), -8px -8px 18px var(--shd-l),
+              inset 2px 2px 4px rgba(255,255,255,0.7), inset -2px -2px 4px rgba(200,210,228,0.3);
+}
+.nm-in {
+  box-shadow: inset 5px 5px 12px var(--shd-d), inset -5px -5px 12px var(--shd-l);
+}
+
+/* ── LAYOUT ──────────────────────────────────────────────────── */
+.container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 24px; }
+.page { display: none; width: 100%; min-height: 100vh; }
+.page.active { display: flex; width: 100%; min-height: 100vh; }
+.page.active .container { display: flex !important; }
+
+/* ── APP BRAND ───────────────────────────────────────────────── */
+.app-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0 4px;
+}
+.brand-icon {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, var(--primary), #8b5cf6);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  box-shadow: 5px 5px 14px var(--shd-d), -3px -3px 10px var(--shd-l),
+              inset 2px 2px 5px rgba(255,255,255,0.35), inset -2px -2px 5px rgba(0,0,0,0.15);
+}
+.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-name {
+  font-size: 26px; font-weight: 900; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--primary), #8b5cf6);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.brand-sub { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase; }
+
+/* ── CLAY CARD ───────────────────────────────────────────────── */
+.clay-card {
+  background: var(--bg);
+  border-radius: var(--radius-xl);
+  padding: 28px 22px;
+  display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 14px 14px 28px var(--shd-d), -14px -14px 28px var(--shd-l),
+              inset 3px 3px 8px rgba(255,255,255,0.85), inset -3px -3px 8px rgba(200,210,228,0.35);
+}
+
+/* ── SECTION HEADER ──────────────────────────────────────────── */
+.section-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 2px;
+}
+.section-icon {
+  width: 36px; height: 36px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 4px 4px 10px var(--shd-d), -4px -4px 10px var(--shd-l),
+              inset 2px 2px 4px rgba(255,255,255,0.6);
+}
+.si-primary  { background: linear-gradient(135deg, #dde4ff, #c8d4f8); }
+.si-html     { background: linear-gradient(135deg, #ffe5dd, #ffd0c5); }
+.si-css      { background: linear-gradient(135deg, #dde5ff, #c8d0f8); }
+.si-js       { background: linear-gradient(135deg, #fff8dd, #fef0b8); }
+.si-tweek    { background: linear-gradient(135deg, #eedcff, #ddc0f8); }
+.si-save     { background: linear-gradient(135deg, #ddfff0, #b8f5d8); }
+.si-danger   { background: linear-gradient(135deg, #ffe0e0, #ffbfbf); }
+.si-list     { background: linear-gradient(135deg, #e0f0ff, #c0dfff); }
+.si-preview  { background: linear-gradient(135deg, #e0ffe8, #c0f5d0); }
+.section-title { font-size: 17px; font-weight: 800; color: var(--text); }
+.section-sub   { font-size: 12px; color: var(--text2); font-weight: 600; }
+
+/* ── CLAY BUTTON ─────────────────────────────────────────────── */
+.clay-btn {
+  width: 100%; background: var(--bg); border-radius: 20px;
+  padding: 18px 20px; font-size: 16px; font-weight: 800;
+  color: var(--text); border: none; cursor: pointer;
+  display: flex; justify-content: center; align-items: center; gap: 9px;
+  box-shadow: 7px 7px 15px var(--shd-d), -7px -7px 15px var(--shd-l),
+              inset 2px 2px 5px rgba(255,255,255,0.85), inset -2px -2px 5px rgba(200,210,228,0.3);
+  transition: all 0.18s ease; text-align: center; font-family: var(--font);
+  position: relative; overflow: hidden;
+}
+.clay-btn::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 60%);
+  pointer-events: none;
+}
+.clay-btn:active {
+  box-shadow: 2px 2px 5px var(--shd-d), -2px -2px 5px var(--shd-l),
+              inset 5px 5px 10px rgba(200,210,228,0.7), inset -5px -5px 10px rgba(255,255,255,0.8);
+  transform: translateY(1px);
+}
+.clay-btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+
+/* Coloured variants */
+.clay-btn.primary   { background: var(--primary);  color: #fff; box-shadow: 7px 7px 15px #b0bde8, -7px -7px 15px var(--shd-l), inset 3px 3px 7px rgba(255,255,255,0.25), inset -3px -3px 7px rgba(0,0,0,0.12); }
+.clay-btn.btn-html  { background: var(--html-c);   color: #fff; box-shadow: 7px 7px 15px #e8b0a0, -7px -7px 15px var(--shd-l), inset 3px 3px 7px rgba(255,255,255,0.25), inset -3px -3px 7px rgba(0,0,0,0.12); }
+.clay-btn.btn-css   { background: var(--css-c);    color: #fff; box-shadow: 7px 7px 15px #a0b0e8, -7px -7px 15px var(--shd-l), inset 3px 3px 7px rgba(255,255,255,0.25), inset -3px -3px 7px rgba(0,0,0,0.12); }
+.clay-btn.btn-js    { background: var(--js-c);     color: #fff; box-shadow: 7px 7px 15px #d8c880, -7px -7px 15px var(--shd-l), inset 3px 3px 7px rgba(255,255,255,0.25), inset -3px -3px 7px rgba(0,0,0,0.12); }
+.clay-btn.btn-tweek { background: var(--tweek-c);  color: #fff; box-shadow: 7px 7px 15px #c0a0e0, -7px -7px 15px var(--shd-l), inset 3px 3px 7px rgba(255,255,255,0.25), inset -3px -3px 7px rgba(0,0,0,0.12); }
+.clay-btn.btn-danger  { background: var(--danger);  color: #fff; box-shadow: 7px 7px 15px #e8a0a0, -7px -7px 15px var(--shd-l), inset 3px 3px 7px rgba(255,255,255,0.25), inset -3px -3px 7px rgba(0,0,0,0.12); }
+.clay-btn.btn-success { background: var(--success); color: #fff; box-shadow: 7px 7px 15px #90d8b8, -7px -7px 15px var(--shd-l), inset 3px 3px 7px rgba(255,255,255,0.25), inset -3px -3px 7px rgba(0,0,0,0.12); }
+
+/* Upload row */
+.upload-group { display: flex; gap: 12px; }
+.upload-group .clay-btn { flex: 1; padding: 16px 8px; font-size: 14px; }
+
+/* Status chip */
+.status {
+  text-align: center; font-size: 14px; font-weight: 700;
+  color: var(--primary2); min-height: 22px; padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  box-shadow: inset 3px 3px 8px var(--shd-d), inset -3px -3px 8px var(--shd-l);
+  word-break: break-word; line-height: 1.5;
+}
+
+/* Clear row */
+.clear-row { display: flex; justify-content: flex-end; }
+.clear-row .clay-btn { width: auto; padding: 10px 20px; font-size: 13px; border-radius: 14px; }
+
+/* ── POPUP FULLSCREEN ────────────────────────────────────────── */
+.popup {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; z-index: 200;
+  visibility: hidden; opacity: 0; transition: opacity 0.22s;
+}
+.popup.show, .page.active .popup { visibility: visible; opacity: 1; display: flex; }
+
+.popup-header {
+  padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
+  background: var(--bg);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  flex-shrink: 0; z-index: 10;
+}
+.popup-title-group { display: flex; align-items: center; gap: 10px; }
+.popup-icon {
+  width: 38px; height: 38px; border-radius: 12px; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 4px 4px 10px var(--shd-d), -4px -4px 10px var(--shd-l), inset 2px 2px 4px rgba(255,255,255,0.6);
+}
+.popup-label { font-size: 17px; font-weight: 800; color: var(--text); }
+.close-btn {
+  background: var(--bg); border: none; width: 40px; height: 40px;
+  border-radius: 13px; font-size: 18px; font-weight: 900;
+  color: var(--danger); display: flex; justify-content: center; align-items: center;
+  cursor: pointer; font-family: var(--font);
+  box-shadow: 4px 4px 9px var(--shd-d), -4px -4px 9px var(--shd-l), inset 2px 2px 4px rgba(255,255,255,0.7);
+  transition: all 0.15s; flex-shrink: 0;
+}
+.close-btn:active { box-shadow: inset 4px 4px 9px var(--shd-d), inset -4px -4px 9px var(--shd-l); }
+
+/* View Toggle Bar */
+.view-toggle-bar {
+  display: flex; gap: 10px; padding: 10px 16px;
+  background: var(--bg); justify-content: center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.03); z-index: 9; flex-shrink: 0;
+}
+.view-toggle-btn {
+  flex: 1; padding: 11px; border-radius: 14px; border: none;
+  font-weight: 800; cursor: pointer; background: var(--bg); color: var(--text2);
+  box-shadow: 4px 4px 9px var(--shd-d), -4px -4px 9px var(--shd-l);
+  transition: all 0.2s; font-size: 13px; font-family: var(--font);
+}
+.view-toggle-btn.active {
+  box-shadow: inset 3px 3px 7px var(--shd-d), inset -3px -3px 7px var(--shd-l);
+  color: var(--primary); font-size: 13px;
+}
+
+/* Code container */
+.code-container { flex: 1; padding: 14px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; }
+
+/* ── EXT BLOCK ───────────────────────────────────────────────── */
+.ext-block {
+  border-radius: var(--radius-lg); overflow: hidden;
+  box-shadow: 8px 8px 20px var(--shd-d), -4px -4px 12px var(--shd-l);
+  display: flex; flex-direction: column;
+}
+.ext-block-header {
+  background: #1a1d27; display: flex; justify-content: space-between;
+  align-items: center; padding: 11px 16px;
+}
+.ext-block-title { font-size: 13px; font-weight: 800; color: #c8cfdf; display: flex; align-items: center; gap: 7px; }
+.ext-block-actions { display: flex; gap: 8px; }
+.fab {
+  background: rgba(255,255,255,0.08); border: none; border-radius: 9px;
+  padding: 6px 13px; color: #aab2c0; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all 0.18s; font-family: var(--font);
+  display: flex; align-items: center; gap: 5px;
+}
+.fab:hover { background: rgba(255,255,255,0.18); color: #fff; }
+.fab.save { color: #7cdb9a; }
+.fab.dl   { color: #7ab8f5; }
+.ext-pre { margin: 0; border-radius: 0; background: #21242f !important; overflow: auto !important; max-height: 360px; min-height: 60px; display: block; }
+.ext-pre code { font-family: 'Consolas','Monaco',monospace !important; font-size: 12.5px; padding: 16px !important; display: block; white-space: pre !important; word-wrap: normal !important; overflow-x: auto; touch-action: pan-x pan-y; }
+
+/* ── BOTTOM BAR ──────────────────────────────────────────────── */
+.bottom-bar {
+  display: flex; gap: 10px; padding: 12px 14px 18px;
+  flex-shrink: 0; background: var(--bg);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
+}
+.bottom-bar .clay-btn { flex: 1; padding: 13px 8px; font-size: 13px; border-radius: 16px; }
+
+/* ── LIST ITEMS ──────────────────────────────────────────────── */
+.list-container { flex: 1; padding: 14px; overflow-y: auto; }
+.list-item {
+  background: var(--bg); border-radius: var(--radius-lg);
+  padding: 14px 16px; margin-bottom: 12px;
+  box-shadow: 7px 7px 15px var(--shd-d), -7px -7px 15px var(--shd-l),
+              inset 2px 2px 5px rgba(255,255,255,0.8), inset -2px -2px 5px rgba(200,210,228,0.25);
+  display: flex; align-items: center; cursor: default;
+}
+.list-item-info { flex: 1; cursor: pointer; }
+.list-item-title { font-size: 15px; font-weight: 800; color: var(--text); }
+.list-item-meta  { font-size: 11px; color: var(--text2); margin-top: 3px; font-weight: 600; }
+.list-item-actions { display: flex; gap: 8px; flex-shrink: 0; margin-left: 10px; }
+
+.icon-btn {
+  background: var(--bg); border: none;
+  width: 36px; height: 36px; border-radius: 11px; font-size: 15px;
+  display: flex; justify-content: center; align-items: center;
+  cursor: pointer;
+  box-shadow: 4px 4px 8px var(--shd-d), -4px -4px 8px var(--shd-l),
+              inset 2px 2px 4px rgba(255,255,255,0.7);
+  flex-shrink: 0; transition: all 0.15s;
+}
+.icon-btn:active { box-shadow: inset 4px 4px 8px var(--shd-d), inset -4px -4px 8px var(--shd-l); }
+.icon-btn.danger { color: var(--danger); }
+.icon-btn.edit   { color: var(--primary); }
+.icon-btn.rename { color: var(--tweek-c); }
+
+/* Version badge */
+.version-badge {
+  display: inline-flex; align-items: center;
+  background: var(--primary); color: #fff;
+  font-size: 10px; font-weight: 800; padding: 2px 7px;
+  border-radius: 20px; margin-left: 6px; letter-spacing: 0.3px;
+}
+
+/* Ver file items */
+.ver-section { margin-bottom: 18px; }
+.ver-section-title {
+  font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 7px;
+}
+.ver-count { font-size: 11px; color: var(--text2); font-weight: 600; }
+
+.ver-file-item {
+  background: var(--bg); border-radius: var(--radius-md);
+  padding: 11px 14px; margin-bottom: 7px;
+  box-shadow: 5px 5px 11px var(--shd-d), -5px -5px 11px var(--shd-l),
+              inset 2px 2px 4px rgba(255,255,255,0.7);
+}
+.ver-file-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ver-file-name { font-size: 13px; font-weight: 800; color: var(--text); }
+.ver-file-actions { display: flex; gap: 7px; align-items: center; }
+.ver-del-btn {
+  background: var(--bg); border: none; border-radius: 9px;
+  padding: 5px 11px; font-size: 11px; font-weight: 700;
+  color: var(--danger); cursor: pointer; font-family: var(--font);
+  box-shadow: 3px 3px 6px var(--shd-d), -3px -3px 6px var(--shd-l);
+}
+.ver-rename-btn {
+  background: var(--bg); border: none; border-radius: 9px;
+  padding: 5px 11px; font-size: 11px; font-weight: 700;
+  color: var(--tweek-c); cursor: pointer; font-family: var(--font);
+  box-shadow: 3px 3px 6px var(--shd-d), -3px -3px 6px var(--shd-l);
+}
+
+/* Select (ver-sel) */
+select.ver-sel {
+  padding: 10px 13px; border-radius: 13px; border: none;
+  background: var(--bg2); color: var(--text); font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: var(--font);
+  box-shadow: inset 3px 3px 7px var(--shd-d), inset -3px -3px 7px var(--shd-l);
+  width: 100%;
+}
+select.ver-sel:focus { outline: none; box-shadow: inset 3px 3px 7px var(--shd-d), inset -3px -3px 7px var(--shd-l), 0 0 0 2px rgba(91,125,245,0.3); }
+select { padding: 11px; border-radius: 13px; border: none; background: var(--bg2); color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font); box-shadow: inset 3px 3px 7px var(--shd-d), inset -3px -3px 7px var(--shd-l); }
+select:focus { outline: none; }
+
+/* ── MODALS ──────────────────────────────────────────────────── */
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(30,40,60,0.38);
+  backdrop-filter: blur(6px);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 500; padding: 20px;
+  visibility: hidden; opacity: 0; transition: opacity 0.22s;
+}
+.modal.show { visibility: visible; opacity: 1; }
+
+.modal-content {
+  background: var(--bg); border-radius: 28px; padding: 24px 22px;
+  max-width: 400px; width: 100%;
+  box-shadow: 16px 16px 32px var(--shd-d), -10px -10px 24px var(--shd-l),
+              inset 3px 3px 8px rgba(255,255,255,0.85);
+  display: flex; flex-direction: column; gap: 14px;
+  max-height: 90vh; overflow-y: auto;
+  animation: modalPop 0.22s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes modalPop { from { transform: scale(0.88) translateY(10px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
+.modal-header {
+  display: flex; align-items: center; gap: 11px; margin-bottom: 2px;
+}
+.modal-icon {
+  width: 42px; height: 42px; border-radius: 13px; font-size: 20px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  box-shadow: 4px 4px 10px var(--shd-d), -4px -4px 10px var(--shd-l), inset 2px 2px 5px rgba(255,255,255,0.6);
+}
+.modal-title { font-size: 17px; font-weight: 900; color: var(--text); }
+.modal-sub   { font-size: 12px; color: var(--text2); font-weight: 600; margin-top: -6px; }
+
+.modal-file-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+.modal-file-item {
+  background: var(--bg2); border-radius: 13px; padding: 11px 14px;
+  font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer;
+  box-shadow: 4px 4px 9px var(--shd-d), -4px -4px 9px var(--shd-l);
+  display: flex; justify-content: space-between; align-items: center;
+  transition: all 0.15s; border: 2px solid transparent;
+}
+.modal-file-item.selected { border-color: var(--primary); background: #dde5ff; color: var(--primary2); }
+.modal-btn-row { display: flex; gap: 10px; }
+.modal-btn-row .clay-btn { flex: 1; padding: 13px; font-size: 14px; border-radius: 16px; }
+.modal-close { background: var(--bg); color: var(--text2); }
+
+/* Save opts */
+.save-opts { display: flex; gap: 10px; }
+.save-opt {
+  flex: 1; background: var(--bg); border: 2.5px solid transparent;
+  border-radius: 14px; padding: 11px 8px; font-size: 13px; font-weight: 800;
+  color: var(--text2); cursor: pointer; font-family: var(--font);
+  box-shadow: 4px 4px 9px var(--shd-d), -4px -4px 9px var(--shd-l);
+  text-align: center; transition: all 0.2s;
+}
+.save-opt.sel { border-color: var(--primary); color: var(--primary); background: #e8edff; box-shadow: inset 2px 2px 5px rgba(200,210,228,0.5); }
+
+/* Modal Input */
+input.modal-input, textarea.modal-input {
+  width: 100%; padding: 11px 14px; border-radius: 13px; border: none;
+  font-size: 13px; background: var(--bg2); font-family: var(--font); font-weight: 600;
+  color: var(--text);
+  box-shadow: inset 3px 3px 8px var(--shd-d), inset -3px -3px 8px var(--shd-l);
+}
+input.modal-input:focus, textarea.modal-input:focus {
+  outline: none;
+  box-shadow: inset 3px 3px 8px var(--shd-d), inset -3px -3px 8px var(--shd-l), 0 0 0 2.5px rgba(91,125,245,0.35);
+}
+textarea.modal-input { resize: vertical; font-family: 'Consolas','Monaco',monospace; font-size: 12.5px; }
+
+/* Label */
+.modal-label { font-size: 12px; font-weight: 800; color: var(--text); display: block; margin-bottom: 4px; }
+
+/* ── TOAST ───────────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(14px);
+  background: #1e2538; color: #e8edf5;
+  padding: 11px 22px; border-radius: 22px; font-size: 14px; font-weight: 700;
+  font-family: var(--font); z-index: 9999; opacity: 0;
+  transition: opacity 0.22s, transform 0.22s; pointer-events: none;
+  white-space: nowrap; box-shadow: 0 6px 24px rgba(0,0,0,0.28);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── EDITOR PAGE ─────────────────────────────────────────────── */
+.editor-page {
+  flex: 1; padding: 12px 14px 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  overflow-y: auto; min-height: 0;
+}
+
+.code-edit-wrap {
+  border-radius: var(--radius-md); overflow: hidden;
+  box-shadow: inset 4px 4px 12px rgba(0,0,0,0.28), 4px 4px 10px var(--shd-d);
+  background: #21242f; display: flex; flex-direction: column;
+  min-height: 400px; flex: 1;
+}
+
+/* Editor toolbar */
+.code-edit-toolbar {
+  background: #181b24; display: flex; flex-direction: column;
+  padding: 10px 14px; flex-shrink: 0; gap: 10px;
+}
+.code-edit-toolbar-top { display: flex; justify-content: space-between; align-items: center; }
+.code-edit-label { font-size: 12px; font-weight: 800; color: #8891a8; letter-spacing: 0.8px; text-transform: uppercase; }
+
+/* Block select buttons */
+.blk-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.blk-btn {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 5px 11px; color: #9da8bb;
+  font-size: 11px; font-weight: 800; cursor: pointer;
+  transition: all 0.15s; font-family: var(--font);
+  display: flex; align-items: center; gap: 4px;
+}
+.blk-btn:hover { background: rgba(255,255,255,0.16); color: #e8edf5; border-color: rgba(255,255,255,0.2); }
+
+/* Editor action buttons row */
+.editor-action-row {
+  display: flex; gap: 7px; flex-wrap: wrap;
+  padding: 8px 14px 10px; background: #181b24; flex-shrink: 0;
+}
+.ed-act-btn {
+  flex: 1; min-width: 60px;
+  background: #21242f; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 11px; padding: 8px 6px; font-size: 12px; font-weight: 800;
+  cursor: pointer; transition: all 0.18s; font-family: var(--font);
+  display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center;
+}
+.ed-act-btn .act-icon { font-size: 16px; line-height: 1; }
+.ed-act-btn .act-label { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; }
+.ed-act-btn:hover { background: rgba(255,255,255,0.1); }
+.ed-act-btn.danger { color: #f07070; border-color: rgba(240,112,112,0.2); }
+.ed-act-btn.add    { color: #7ab8f5; border-color: rgba(122,184,245,0.2); }
+.ed-act-btn.replace { color: #7cdb9a; border-color: rgba(124,219,154,0.2); }
+.ed-act-btn.similar { color: #e8c060; border-color: rgba(232,192,96,0.2); }
+.ed-act-btn:active  { opacity: 0.7; transform: scale(0.97); }
+
+/* ── SOLID TEXTAREA EDITOR (No wrapping, no line numbers) ── */
+.code-ta {
+  flex: 1; border: none; font-family: 'Consolas','Monaco',monospace;
+  font-size: 13px; background: #21242f !important; color: #c8cfdf !important;
+  -webkit-text-fill-color: #c8cfdf !important;
+  padding: 14px; resize: none; min-height: 320px; line-height: 1.65; tab-size: 2;
+  white-space: pre !important; overflow-wrap: normal !important; word-break: normal !important; 
+  overflow-x: auto; overflow-y: auto;
+}
+.code-ta:focus { outline: none; }
+.code-ta::selection { background-color: rgba(57, 255, 20, 0.4) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; }
+
+/* Find panel */
+.fr-panel {
+  background: var(--bg); border-radius: var(--radius-md);
+  padding: 13px; box-shadow: 6px 6px 14px var(--shd-d), -6px -6px 14px var(--shd-l);
+  display: flex; flex-direction: column; gap: 9px; flex-shrink: 0;
+}
+.fr-label { font-size: 11px; font-weight: 800; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-bottom: 3px; }
+.find-inp {
+  width: 100%; border-radius: 12px; padding: 9px 13px; border: none;
+  font-family: 'Consolas','Monaco',monospace; font-size: 13px;
+  background: var(--bg2); color: var(--text);
+  box-shadow: inset 3px 3px 8px var(--shd-d), inset -3px -3px 8px var(--shd-l);
+}
+.find-inp:focus { outline: none; box-shadow: inset 3px 3px 8px var(--shd-d), inset -3px -3px 8px var(--shd-l), 0 0 0 2.5px rgba(91,125,245,0.3); }
+.match-count { font-size: 12px; font-weight: 700; min-height: 16px; }
+.match-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; max-height: 68px; overflow-y: auto; }
+.match-chip {
+  background: rgba(91,125,245,0.1); border: 1.5px solid rgba(91,125,245,0.35);
+  border-radius: 8px; padding: 3px 9px; font-size: 11px; font-weight: 700;
+  color: var(--primary2); cursor: pointer; font-family: 'Consolas','Monaco',monospace;
+  white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; transition: background 0.15s;
+}
+.match-chip:hover { background: rgba(91,125,245,0.22); }
+.match-chip.active-chip { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* Edit bottom bar */
+.edit-bot { display: flex; gap: 10px; flex-shrink: 0; }
+.edit-bot .clay-btn { flex: 1; padding: 13px; font-size: 14px; border-radius: 16px; }
+
+/* Similar block */
+.similar-item {
+  background: var(--bg2); border-radius: 11px; padding: 10px; margin-bottom: 7px;
+  font-family: 'Consolas','Monaco',monospace; font-size: 11px; color: var(--text);
+  cursor: pointer;
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);
+  border: 1.5px solid transparent; white-space: pre-wrap; word-break: break-all;
+  max-height: 90px; overflow: hidden; position: relative;
+}
+.similar-item:hover { border-color: var(--primary); }
+.similar-item::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 22px; background: linear-gradient(transparent, var(--bg2)); }
+
+/* ── DETAIL BOTTOM BAR ───────────────────────────────────────── */
+.detail-bottom {
+  padding: 12px 14px 18px; flex-shrink: 0; background: var(--bg);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ver-row { display: flex; align-items: center; gap: 9px; }
+.ver-row-label {
+  font-size: 12px; font-weight: 800; min-width: 48px; text-align: right;
+  flex-shrink: 0;
+}
+
+/* iframe */
+iframe { flex: 1; border: none; width: 100%; background: #fff; }
+
+/* ── DIVIDER ─────────────────────────────────────────────────── */
+.divider { height: 1.5px; background: linear-gradient(90deg, transparent, var(--shd-d), transparent); border: none; }
+
+/* ── CUSTOM DROPDOWN ─────────────────────────────────────────── */
+.custom-select-wrap { position: relative; width: 100%; }
+.custom-select-trigger {
+  width: 100%; padding: 12px 40px 12px 14px; border-radius: 13px; border: none;
+  background: var(--bg); color: var(--text); font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: var(--font); text-align: left;
+  box-shadow: inset 3px 3px 7px var(--shd-d), inset -3px -3px 7px var(--shd-l);
+  display: flex; align-items: center; justify-content: space-between;
+  transition: box-shadow 0.18s;
+}
+.custom-select-trigger.open {
+  box-shadow: inset 3px 3px 7px var(--shd-d), inset -3px -3px 7px var(--shd-l), 0 0 0 2px rgba(91,125,245,0.35);
+}
+.custom-select-trigger .cst-arrow {
+  width: 20px; height: 20px; flex-shrink: 0; margin-left: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--text2); transition: transform 0.2s;
+}
+.custom-select-trigger.open .cst-arrow { transform: rotate(180deg); }
+.custom-select-trigger .cst-val { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.custom-select-trigger .cst-val.placeholder { color: var(--text2); }
+.custom-dropdown {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+  background: var(--bg); border-radius: var(--radius-md); z-index: 600;
+  box-shadow: 10px 10px 24px var(--shd-d), -6px -6px 16px var(--shd-l),
+              inset 2px 2px 6px rgba(255,255,255,0.85);
+  max-height: 220px; overflow-y: auto;
+  display: none; flex-direction: column; padding: 6px;
+  animation: dropDown 0.18s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes dropDown { from { opacity:0; transform:translateY(-8px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+.custom-dropdown.open { display: flex; }
+.csd-option {
+  padding: 11px 14px; border-radius: 10px; font-size: 13px; font-weight: 700;
+  color: var(--text); cursor: pointer; transition: all 0.14s;
+  font-family: var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.csd-option:hover { background: rgba(91,125,245,0.1); color: var(--primary2); }
+.csd-option.selected { background: #dde5ff; color: var(--primary2); }
+.csd-option.placeholder-opt { color: var(--text2); }
+
+.tweek-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.tweek-grid .clay-btn { padding: 20px 8px; font-size: 14px; flex-direction: column; gap: 6px; border-radius: 20px; }
+.tweek-btn-icon { font-size: 24px; }
+.tweek-btn-label { font-size: 12px; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<div class="page active" id="homePage">
+  <div class="container">
+
+    <div class="app-brand">
+      <div class="brand-icon">⚗️</div>
+      <div class="brand-text">
+        <span class="brand-name">WBA Pro</span>
+        <span class="brand-sub">Precision Extractor</span>
+      </div>
+    </div>
+
+    <div class="clay-card">
+      <div class="section-header">
+        <div class="section-icon si-primary">📥</div>
+        <div>
+          <div class="section-title">Upload File</div>
+          <div class="section-sub">PDF or MHT/MHTML supported</div>
+        </div>
+      </div>
+
+      <div class="upload-group">
+        <input type="file" id="pdfUpload" style="display:none" onchange="updateFileName('pdf')" accept=".pdf">
+        <label class="clay-btn" for="pdfUpload">
+          <span>📄</span><span>PDF</span>
+        </label>
+        <input type="file" id="mhtUpload" style="display:none" onchange="updateFileName('mht')" accept=".mht,.mhtml">
+        <label class="clay-btn" for="mhtUpload">
+          <span>🌐</span><span>MHT</span>
+        </label>
+      </div>
+
+      <div class="status" id="statusText">Waiting for file…</div>
+
+      <div class="clear-row" id="clearRow" style="display:none">
+        <button class="clay-btn btn-danger" onclick="clearFile()">🗑️ Clear File</button>
+      </div>
+
+      <button class="clay-btn primary" onclick="extract()" id="extractBtn">
+        <span>⚙️</span><span>Extract Tagged Codes</span>
+      </button>
+
+      <hr class="divider">
+
+      <button class="clay-btn" onclick="showFilesView()" id="filesBtn" disabled>
+        <span>📝</span><span>View Extracted Files</span>
+      </button>
+      <button class="clay-btn btn-success" onclick="preview()" id="previewBtn" disabled>
+        <span>👁️</span><span>Fullscreen Preview</span>
+      </button>
+      <button class="clay-btn btn-tweek" onclick="showTweekPage()">
+        <span>🛠️</span><span>Tweek Editor</span>
+      </button>
+    </div>
+
+    <button class="clay-btn" onclick="showSavedLists()">
+      <span>📚</span><span>Saved Lists</span>
+    </button>
+
+  </div>
+</div>
+
+<div class="page" id="filesViewPage">
+  <div class="popup" id="filesViewPopup">
+    <div class="popup-header">
+      <div class="popup-title-group">
+        <div class="popup-icon si-primary">📝</div>
+        <span class="popup-label">Extracted Files</span>
+      </div>
+      <button class="close-btn" onclick="closePage('filesViewPage')">✕</button>
+    </div>
+    <div class="view-toggle-bar">
+      <button class="view-toggle-btn active" id="btnViewDef" onclick="setViewMode('default')">Default View</button>
+      <button class="view-toggle-btn" id="btnViewComp" onclick="setViewMode('complete')">Complete HTML</button>
+    </div>
+    <div class="code-container" id="filesCodeContainer"></div>
+    <div class="bottom-bar">
+      <button class="clay-btn primary" onclick="openSaveAllModal()">💾 Save All</button>
+      <button class="clay-btn btn-success" onclick="downloadAllFiles()">⬇️ Download</button>
+      <button class="clay-btn modal-close" onclick="closePage('filesViewPage')" style="flex:0.55;font-size:12px;">← Back</button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="tweekPage">
+  <div class="popup">
+    <div class="popup-header">
+      <div class="popup-title-group">
+        <div class="popup-icon si-tweek">🛠️</div>
+        <span class="popup-label">Tweek Editor</span>
+      </div>
+      <button class="close-btn" onclick="closePage('tweekPage')">✕</button>
+    </div>
+    <div class="code-container">
+      <div class="clay-card">
+        <div class="section-header">
+          <div class="section-icon si-tweek">⚡</div>
+          <div>
+            <div class="section-title">Open a File</div>
+            <div class="section-sub">Choose a file type to edit</div>
+          </div>
+        </div>
+        <div class="tweek-grid">
+          <button class="clay-btn btn-html" onclick="showTweekModal('html')">
+            <span class="tweek-btn-icon">📄</span>
+            <span class="tweek-btn-label">HTML</span>
+          </button>
+          <button class="clay-btn btn-css" onclick="showTweekModal('css')">
+            <span class="tweek-btn-icon">🎨</span>
+            <span class="tweek-btn-label">CSS</span>
+          </button>
+          <button class="clay-btn btn-js" onclick="showTweekModal('js')">
+            <span class="tweek-btn-icon">⚡</span>
+            <span class="tweek-btn-label">JS</span>
+          </button>
+        </div>
+        <button class="clay-btn primary" onclick="showTweekModal('complete')">
+          <span>🖥️</span><span>Edit Complete HTML</span>
+        </button>
+      </div>
+      <button class="clay-btn" onclick="closePage('tweekPage')">← Back</button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="editPage">
+  <div class="popup">
+    <div class="popup-header">
+      <div class="popup-title-group">
+        <div class="popup-icon si-tweek">✏️</div>
+        <span class="popup-label" id="editPageTitle">Edit Code</span>
+      </div>
+      <button class="close-btn" onclick="cancelEdit()">✕</button>
+    </div>
+
+    <div class="editor-page">
+      <div class="code-edit-wrap">
+        <div class="code-edit-toolbar">
+          <div class="code-edit-toolbar-top">
+            <span class="code-edit-label" id="editCodeLabel">Code</span>
+            <div class="blk-btns">
+              <button class="blk-btn" id="selHtmlBtn" style="display:none" onclick="selectHTMLBlock()">⊞ HTML</button>
+              <button class="blk-btn" id="selCssBtn"  style="display:none" onclick="selectCSSBlock()">⊞ CSS</button>
+              <button class="blk-btn" id="selJsBtn"   style="display:none" onclick="selectJSBlock()">⊞ JS</button>
+              <button class="blk-btn" onclick="selectAllCode()">⊠ All</button>
+            </div>
+          </div>
+        </div>
+        <div class="editor-action-row">
+          <button class="ed-act-btn danger" onclick="deleteSelectedCode()">
+            <span class="act-icon">🗑️</span><span class="act-label">DELETE</span>
+          </button>
+          <button class="ed-act-btn add" onclick="openAddCodeModal()">
+            <span class="act-icon">➕</span><span class="act-label">ADD</span>
+          </button>
+          <button class="ed-act-btn replace" onclick="openReplaceCodeModal()">
+            <span class="act-icon">🔄</span><span class="act-label">REPLACE</span>
+          </button>
+          <button class="ed-act-btn similar" onclick="openSimilarCodeModal()">
+            <span class="act-icon">🔍</span><span class="act-label">SIMILAR</span>
+          </button>
+        </div>
+        
+        <textarea class="code-ta" id="codeEditorMain" wrap="off" spellcheck="false" inputmode="none"
+                  oninput="debouncedUndoPush()"
+                  onclick="this.setAttribute('inputmode','text');"
+                  onblur="this.setAttribute('inputmode','none');"></textarea>
+      </div>
+
+      <div class="fr-panel">
+        <label class="fr-label">🔍 Find in Code</label>
+        <input type="text" class="find-inp" id="findInput" placeholder="Type to search…" oninput="doFind()">
+        <div class="match-count" id="matchCount"></div>
+        <div class="match-chips" id="matchChips"></div>
+      </div>
+
+      <div class="edit-bot">
+        <button class="clay-btn" onclick="undoEdit()" style="flex:0.45;font-size:20px;">↩️</button>
+        <button class="clay-btn primary" onclick="saveEditAsNewVersion()">💾 Save Version</button>
+        <button class="clay-btn" onclick="cancelEdit()" style="flex:0.7;font-size:13px;">← Back</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="savedListsPage">
+  <div class="popup">
+    <div class="popup-header">
+      <div class="popup-title-group">
+        <div class="popup-icon si-list">📚</div>
+        <span class="popup-label">Saved Lists</span>
+      </div>
+      <button class="close-btn" onclick="closePage('savedListsPage')">✕</button>
+    </div>
+    <div class="list-container" id="listsContainer"></div>
+  </div>
+</div>
+
+<div class="page" id="listDetailPage">
+  <div class="popup">
+    <div class="popup-header">
+      <div class="popup-title-group">
+        <div class="popup-icon si-list">📂</div>
+        <span class="popup-label" id="listDetailTitle">List Detail</span>
+      </div>
+      <button class="close-btn" onclick="closeListDetail()">✕</button>
+    </div>
+    <div class="list-container" id="listVersionsContainer"></div>
+    <div class="detail-bottom">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="ver-row">
+          <span class="ver-row-label" style="color:var(--html-c);">📄 HTML</span>
+          <select class="ver-sel" id="listVersionSelectHtml" style="flex:1;"></select>
+        </div>
+        <div class="ver-row">
+          <span class="ver-row-label" style="color:var(--css-c);">🎨 CSS</span>
+          <select class="ver-sel" id="listVersionSelectCss" style="flex:1;"></select>
+        </div>
+        <div class="ver-row">
+          <span class="ver-row-label" style="color:var(--js-c);">⚡ JS</span>
+          <select class="ver-sel" id="listVersionSelectJs" style="flex:1;"></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="clay-btn primary" onclick="viewListCombined()">🖥️ View Fullscreen</button>
+        <button class="clay-btn btn-success" onclick="downloadListCombined()">⬇️ Download</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="popup" id="codePopup">
+  <div class="popup-header">
+    <div class="popup-title-group">
+      <div class="popup-icon si-primary">📋</div>
+      <span class="popup-label">Extracted Code</span>
+    </div>
+    <button class="close-btn" onclick="closePopup('codePopup')">✕</button>
+  </div>
+  <div class="code-container">
+    <div style="display:none;flex-direction:column;" id="htmlSection">
+      <div style="font-size:16px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:7px;">📄 HTML</div>
+      <pre><code class="language-html" id="codeAreaHtml"></code></pre>
+    </div>
+    <div style="display:none;flex-direction:column;" id="cssSection">
+      <div style="font-size:16px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:7px;">🎨 CSS</div>
+      <pre><code class="language-css" id="codeAreaCss"></code></pre>
+    </div>
+    <div style="display:none;flex-direction:column;" id="jsSection">
+      <div style="font-size:16px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:7px;">⚡ JavaScript</div>
+      <pre><code class="language-js" id="codeAreaJs"></code></pre>
+    </div>
+  </div>
+</div>
+
+<div class="popup" id="previewPopup">
+  <div class="popup-header">
+    <div class="popup-title-group">
+      <div class="popup-icon si-preview">👁️</div>
+      <span class="popup-label">Preview</span>
+    </div>
+    <button class="close-btn" onclick="closePopup('previewPopup')">✕</button>
+  </div>
+  <iframe id="frame"></iframe>
+</div>
+
+<div class="modal" id="saveFileModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-icon si-save">💾</div>
+      <div>
+        <div class="modal-title">Save File</div>
+        <div class="modal-sub" id="sfmSub">Choose destination</div>
+      </div>
+    </div>
+    <div class="save-opts">
+      <button class="save-opt sel" id="sfOptNew"   onclick="sfSetOpt('new')">➕ New List</button>
+      <button class="save-opt"    id="sfOptExist"  onclick="sfSetOpt('exist')">📂 Existing</button>
+    </div>
+    <div id="sfNewArea">
+      <label class="modal-label">List Name</label>
+      <input type="text" class="modal-input" id="sfNewName" placeholder="Enter name…">
+    </div>
+    <div id="sfExistArea" style="display:none">
+      <label class="modal-label">Select List</label>
+      <div class="modal-file-list" id="sfExistList"></div>
+      <label class="modal-label" style="margin-top:10px;">Version Action</label>
+      <div class="save-opts">
+        <button class="save-opt sel" id="sfVerNext" onclick="sfSetVer('next')">📌 Next Version</button>
+        <button class="save-opt"    id="sfVerRepl" onclick="sfSetVer('repl')">🔄 Replace Latest</button>
+      </div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="clay-btn primary" onclick="confirmSaveFile()">✅ Save</button>
+      <button class="clay-btn modal-close" onclick="closeModal('saveFileModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="saveAllModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-icon si-save">💾</div>
+      <div>
+        <div class="modal-title">Save All Files</div>
+        <div class="modal-sub">Save HTML, CSS & JS together</div>
+      </div>
+    </div>
+    <div class="save-opts">
+      <button class="save-opt sel" id="saOptNew"   onclick="saSetOpt('new')">➕ New List</button>
+      <button class="save-opt"    id="saOptExist"  onclick="saSetOpt('exist')">📂 Existing</button>
+    </div>
+    <div id="saNewArea">
+      <label class="modal-label">List Name</label>
+      <input type="text" class="modal-input" id="saNewName" placeholder="Enter name…">
+    </div>
+    <div id="saExistArea" style="display:none">
+      <label class="modal-label">Select List</label>
+      <div class="modal-file-list" id="saExistList"></div>
+      <label class="modal-label" style="margin-top:10px;">Version Action</label>
+      <div class="save-opts">
+        <button class="save-opt sel" id="saVerNext" onclick="saSetVer('next')">📌 Next Version</button>
+        <button class="save-opt"    id="saVerRepl" onclick="saSetVer('repl')">🔄 Replace Latest</button>
+      </div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="clay-btn primary" onclick="confirmSaveAll()">✅ Save All</button>
+      <button class="clay-btn modal-close" onclick="closeModal('saveAllModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="tweekModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-icon si-tweek">🛠️</div>
+      <div>
+        <div class="modal-title" id="tweekModalTitle">Open File</div>
+        <div class="modal-sub">Upload a file or pick from saved lists</div>
+      </div>
+    </div>
+    <div>
+      <input type="file" id="tweekFileInput" style="display:none" onchange="handleTweekUpload()">
+      <label class="clay-btn primary" for="tweekFileInput">📤 Upload File</label>
+    </div>
+    <div style="text-align:center;color:var(--text2);font-size:13px;font-weight:700;">— OR —</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <label class="modal-label">Select a List</label>
+        <div class="custom-select-wrap" id="tweekListWrap">
+          <button type="button" class="custom-select-trigger" id="tweekListTrigger" onclick="toggleCustomSelect('tweekList')">
+            <span class="cst-val placeholder" id="tweekListVal">Choose list…</span>
+            <span class="cst-arrow">▼</span>
+          </button>
+          <div class="custom-dropdown" id="tweekListDropdown"></div>
+        </div>
+        <input type="hidden" id="tweekListSelect">
+      </div>
+      <div>
+        <label class="modal-label">Select a File</label>
+        <div class="custom-select-wrap" id="tweekFileWrap">
+          <button type="button" class="custom-select-trigger" id="tweekFileTrigger" onclick="toggleCustomSelect('tweekFile')">
+            <span class="cst-val placeholder" id="tweekFileVal">Choose file…</span>
+            <span class="cst-arrow">▼</span>
+          </button>
+          <div class="custom-dropdown" id="tweekFileDropdown"></div>
+        </div>
+        <input type="hidden" id="tweekFileSelect">
+      </div>
+    </div>
+    <button class="clay-btn modal-close" onclick="closeModal('tweekModal')">Close</button>
+  </div>
+</div>
+
+<div class="modal" id="addCodeModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-icon si-primary">➕</div>
+      <div>
+        <div class="modal-title">Add Code</div>
+        <div class="modal-sub">Insert code relative to selection</div>
+      </div>
+    </div>
+    <div>
+      <label class="modal-label">Code to Insert</label>
+      <textarea class="modal-input" id="addCodeInp" style="min-height:120px;" placeholder="Paste code here…"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="clay-btn primary" style="flex:1;font-size:13px;padding:12px;border-radius:14px;" onclick="confirmAddCode('above')">⬆️ Insert Above</button>
+      <button class="clay-btn btn-success" style="flex:1;font-size:13px;padding:12px;border-radius:14px;" onclick="confirmAddCode('below')">⬇️ Insert Below</button>
+    </div>
+    <button class="clay-btn modal-close" onclick="closeModal('addCodeModal')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="replaceCodeModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-icon si-save">🔄</div>
+      <div>
+        <div class="modal-title">Replace Code</div>
+        <div class="modal-sub">Replaces currently selected text</div>
+      </div>
+    </div>
+    <div>
+      <label class="modal-label">Replacement Code</label>
+      <textarea class="modal-input" id="replaceCodeInp" style="min-height:120px;" placeholder="Paste replacement code…"></textarea>
+    </div>
+    <button class="clay-btn btn-success" onclick="confirmReplaceCode()">✅ Replace Selected</button>
+    <button class="clay-btn modal-close" onclick="closeModal('replaceCodeModal')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="similarCodeModal">
+  <div class="modal-content" style="max-width:500px;max-height:88vh;">
+    <div class="modal-header">
+      <div class="modal-icon si-js">🔍</div>
+      <div>
+        <div class="modal-title">Find Similar Block</div>
+        <div class="modal-sub">Paste a snippet to locate matches</div>
+      </div>
+    </div>
+    <div>
+      <label class="modal-label">Search Snippet</label>
+      <textarea class="modal-input" id="similarPasteInp" style="min-height:80px;" placeholder="Paste snippet to find…" oninput="handleSimilarInput()"></textarea>
+    </div>
+    <div id="similarList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;min-height:180px;">
+      <div style="color:var(--text2);text-align:center;padding:20px;font-size:13px;font-weight:600;">Paste code above to search</div>
+    </div>
+    <button class="clay-btn modal-close" onclick="closeModal('similarCodeModal')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="confirmModal">
+  <div class="modal-content" style="max-width:320px;">
+    <div class="modal-header">
+      <div class="modal-icon si-danger">⚠️</div>
+      <div>
+        <div class="modal-title">Confirm Delete</div>
+      </div>
+    </div>
+    <div class="modal-sub" id="confirmMsg" style="font-size:14px;color:var(--text);"></div>
+    <div class="modal-btn-row">
+      <button class="clay-btn btn-danger" onclick="confirmDeleteAction()">🗑️ Delete</button>
+      <button class="clay-btn modal-close" onclick="closeModal('confirmModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="renameModal">
+  <div class="modal-content" style="max-width:340px;">
+    <div class="modal-header">
+      <div class="modal-icon si-tweek">✏️</div>
+      <div>
+        <div class="modal-title" id="renameModalTitle">Rename</div>
+        <div class="modal-sub" id="renameModalSub">Enter a new name</div>
+      </div>
+    </div>
+    <div>
+      <label class="modal-label" id="renameModalLabel">Name</label>
+      <input type="text" class="modal-input" id="renameModalInput" placeholder="New name…">
+    </div>
+    <div class="modal-btn-row">
+      <button class="clay-btn primary" onclick="confirmRename()">✅ Rename</button>
+      <button class="clay-btn modal-close" onclick="closeModal('renameModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="downloadNameModal">
+  <div class="modal-content" style="max-width:340px;">
+    <div class="modal-header">
+      <div class="modal-icon si-list">⬇️</div>
+      <div>
+        <div class="modal-title">Download File</div>
+        <div class="modal-sub" id="dlModalSub">Name your file</div>
+      </div>
+    </div>
+    <div>
+      <label class="modal-label">File Name</label>
+      <input type="text" class="modal-input" id="dlModalInput" placeholder="index.html">
+    </div>
+    <div class="modal-btn-row">
+      <button class="clay-btn btn-success" onclick="confirmDownload()">⬇️ Download</button>
+      <button class="clay-btn modal-close" onclick="closeModal('downloadNameModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="saveVersionNameModal">
+  <div class="modal-content" style="max-width:360px;">
+    <div class="modal-header">
+      <div class="modal-icon si-save">💾</div>
+      <div>
+        <div class="modal-title">Save Version</div>
+        <div class="modal-sub">Create a new list to save into</div>
+      </div>
+    </div>
+    <div>
+      <label class="modal-label">List Name</label>
+      <input type="text" class="modal-input" id="svnInput" placeholder="Enter list name…">
+    </div>
+    <div class="modal-btn-row">
+      <button class="clay-btn primary" onclick="confirmSaveVersionName()">✅ Save</button>
+      <button class="clay-btn modal-close" onclick="closeModal('saveVersionNameModal')">Session Only</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+/* ─── STATE ─────────────────────────────────────────────────── */
+let extracted = { html:"", css:"", js:"" };
+let selectedFile = null;
+let currentFileType = "";
+let savedLists = [];
+let currentListId = null;
+let currentEditingFile = null;
+let currentViewMode = 'default';
+
+let sfFileType = null, sfOpt = 'new', sfVer = 'next', sfSelListId = null;
+let saOpt = 'new', saVer = 'next', saSelListId = null;
+let pendingDelete = null;
+
+// Rename state
+let _renameTarget = null; 
+// Download state
+let _dlPending = null; 
+// Save version name state
+let _svnPending = null; 
+
+/* ─── STORAGE ────────────────────────────────────────────────── */
+function loadLists() {
+  const d = localStorage.getItem('pmk_lists');
+  savedLists = d ? JSON.parse(d) : [];
+  const old = localStorage.getItem('savedLists');
+  if (old) {
+    const oldData = JSON.parse(old);
+    oldData.forEach(l => { if (!savedLists.find(x => x.name === l.name)) { migrateList(l); savedLists.push(l); } });
+    saveLists(); localStorage.removeItem('savedLists');
+  }
+}
+function saveLists() { localStorage.setItem('pmk_lists', JSON.stringify(savedLists)); }
+function migrateList(list) {
+  if (!list.fileVersions) {
+    list.fileVersions = {
+      html: list.files && list.files.html ? [{ version:1, label:'v1', code:list.files.html, ts:list.timestamp||'' }] : [],
+      css:  list.files && list.files.css  ? [{ version:1, label:'v1', code:list.files.css,  ts:list.timestamp||'' }] : [],
+      js:   list.files && list.files.js   ? [{ version:1, label:'v1', code:list.files.js,   ts:list.timestamp||'' }] : []
+    };
+  }
+}
+
+/* ─── FILE UTILS ─────────────────────────────────────────────── */
+function clearFile() {
+  selectedFile = null; currentFileType = ""; extracted = {html:"",css:"",js:""};
+  document.getElementById("pdfUpload").value = "";
+  document.getElementById("mhtUpload").value = "";
+  document.getElementById("statusText").innerText = "Waiting for file…";
+  document.getElementById("filesBtn").disabled = true;
+  document.getElementById("previewBtn").disabled = true;
+  document.getElementById("clearRow").style.display = "none";
+}
+function updateFileName(type) {
+  if (type==='pdf') { document.getElementById("mhtUpload").value=""; selectedFile=document.getElementById("pdfUpload").files[0]; currentFileType="pdf"; }
+  else              { document.getElementById("pdfUpload").value=""; selectedFile=document.getElementById("mhtUpload").files[0]; currentFileType="mht"; }
+  if (selectedFile) {
+    document.getElementById("statusText").innerText = "📄 "+selectedFile.name+"\nReady to extract.";
+    document.getElementById("clearRow").style.display = "flex";
+  }
+}
+
+/* ─── EXTRACTION ─────────────────────────────────────────────── */
+function decodeMHT(text) {
+  let parts = text.split(/^--+.*(?:Boundary|NextPart).*$/gm);
+  if (parts.length<=1) { let b=text.match(/boundary="?([^"\r\n]+)"?/i); if(b) parts=text.split(b[1]); else parts=[text]; }
+  let full="";
+  for (let p of parts) {
+    if (!p.toLowerCase().includes("content-type: text/html")) continue;
+    let bi=p.indexOf("\r\n\r\n"); if(bi===-1) bi=p.indexOf("\n\n");
+    if (bi===-1) continue;
+    let hd=p.substring(0,bi).toLowerCase(), body=p.substring(bi).trim();
+    if (hd.includes("base64")) { try{body=atob(body.replace(/\s/g,''));}catch(e){} }
+    else if (hd.includes("quoted-printable")) {
+      body=body.replace(/=\r?\n/g,'');
+      try{body=decodeURIComponent(body.replace(/=([0-9A-F]{2})/gi,'%$1'));}catch(e){body=unescape(body.replace(/=([0-9A-F]{2})/gi,'%$1'));}
+    }
+    full+=body+"\n";
+  }
+  return full||text;
+}
+function extractBlock(text,oRx,cRx) {
+  let parts=text.split(oRx);
+  if (parts.length>1) { let last=parts[parts.length-1].split(cRx); if(last.length>1) return last[0].trim(); }
+  return null;
+}
+function extractUsingMarkers(raw, isMHT) {
+  let plain = raw;
+  if (isMHT) {
+    let sh = raw.replace(/<br\s*[\/]?>/gi, "\n").replace(/<\/div>/gi, "\n").replace(/<\/p>/gi, "\n")
+                .replace(/<\/li>/gi, "\n").replace(/<\/tr>/gi, "\n").replace(/<\/h[1-6]>/gi, "\n");
+    let doc = new DOMParser().parseFromString(sh, "text/html");
+    plain = doc.body ? doc.body.textContent : doc.documentElement.textContent;
+  }
+  plain = plain.replace(/\n\s*\n/g, '\n\n');
+  let htmlCode = "";
+  let lowerPlain = plain.toLowerCase();
+  let htmlStarts = [...lowerPlain.matchAll(/<!doctype html>|<html\s+lang=["']?en["']?>/gi)];
+  if (htmlStarts.length > 0) {
+    let startIdx = htmlStarts[htmlStarts.length - 1].index;
+    
+    // Create a search area starting precisely from the last <!DOCTYPE html>
+    let searchArea = lowerPlain.substring(startIdx);
+    let tagRegex = /<html[\s>]|<\/html>/gi;
+    let match;
+    let depth = 0;
+    let endIdx = -1;
+    let foundHtmlStart = false;
+
+    // Iterate through all <html> and </html> tags in the search area
+    while ((match = tagRegex.exec(searchArea)) !== null) {
+      if (match[0].startsWith("<html")) {
+        depth++;
+        foundHtmlStart = true;
+      } else if (match[0] === "</html>") {
+        if (foundHtmlStart) {
+          depth--;
+        }
+        // When depth returns to 0, we've found the true matching closing tag
+        if (depth === 0) {
+          endIdx = startIdx + match.index + 7; // +7 to include the 7 characters of "</html>"
+          break;
+        }
+      }
+    }
+
+    if (endIdx !== -1) {
+      htmlCode = plain.substring(startIdx, endIdx);
+    } else {
+      // Fallback: If no <html> opening tag existed at all, just stop at the first </html>
+      let fallbackEnd = lowerPlain.indexOf("</html>", startIdx);
+      if (fallbackEnd !== -1) {
+        htmlCode = plain.substring(startIdx, fallbackEnd + 7);
+      } else {
+        htmlCode = plain.substring(startIdx);
+      }
+    }
+  }
+  const M = {
+    cO: new RegExp("/" + "\\*\\s*sageercssopen\\s*\\*" + "/", "i"),
+    cC: new RegExp("/" + "\\*\\s*sageercssclose\\s*\\*" + "/", "i"),
+    jO: new RegExp("/" + "\\*\\s*sageerjsopen\\s*\\*" + "/", "i"),
+    jC: new RegExp("/" + "\\*\\s*sageerjsclose\\s*\\*" + "/", "i")
+  };
+  extracted.html = htmlCode.trim();
+  extracted.css  = extractBlock(plain, M.cO, M.cC) || "";
+  extracted.js   = extractBlock(plain, M.jO, M.jC) || "";
+}
+async function extract() {
+  const st=document.getElementById("statusText"), btn=document.getElementById("extractBtn");
+  if (!selectedFile) return showToast("⚠️ Please upload a file first.");
+  extracted={html:"",css:"",js:""}; st.innerText="Extracting… Please wait."; btn.disabled=true;
+  const reader=new FileReader();
+  if (currentFileType==="pdf") {
+    reader.onload=async function(){
+      try {
+        const pdf=await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
+        let text="";
+        for (let i=1;i<=pdf.numPages;i++) {
+          const page=await pdf.getPage(i), content=await page.getTextContent();
+          let lastY=-1;
+          content.items.forEach(it=>{ if(lastY!==-1&&lastY!==it.transform[5]) text+="\n"; text+=it.str; lastY=it.transform[5]; });
+        }
+        extractUsingMarkers(text,false); processExtracted();
+      } catch(e) { st.innerText="❌ Error processing PDF."; console.error(e); btn.disabled=false; }
+    };
+    reader.readAsArrayBuffer(selectedFile);
+  } else {
+    reader.onload=function(e){
+      try { extractUsingMarkers(decodeMHT(e.target.result),true); processExtracted(); }
+      catch(e) { st.innerText="❌ Error processing MHT."; console.error(e); btn.disabled=false; }
+    };
+    reader.readAsText(selectedFile);
+  }
+}
+function processExtracted() {
+  const st=document.getElementById("statusText"), btn=document.getElementById("extractBtn");
+  let found=false;
+  try { if(extracted.html){extracted.html=html_beautify(extracted.html,{indent_size:2,extra_liners:['head','body','/html','style','script']});found=true;} }catch(e){found=true;}
+  try { if(extracted.css) {extracted.css=css_beautify(extracted.css,{indent_size:2});found=true;} }catch(e){found=true;}
+  try { if(extracted.js)  {extracted.js=js_beautify(extracted.js,{indent_size:2});found=true;} }catch(e){found=true;}
+  if (found) {
+    st.innerText="✅ Successfully Extracted!";
+    document.getElementById("filesBtn").disabled=false;
+    document.getElementById("previewBtn").disabled=false;
+  } else {
+    st.innerText="❌ Markers not found. Check your sageer tags.";
+  }
+  btn.disabled=false;
+}
+
+/* ─── FILES VIEW ─────────────────────────────────────────────── */
+function setViewMode(mode) {
+  currentViewMode = mode;
+  document.getElementById("btnViewDef").classList.toggle("active", mode === 'default');
+  document.getElementById("btnViewComp").classList.toggle("active", mode === 'complete');
+  showFilesView();
+}
+function showFilesView() {
+  const con=document.getElementById("filesCodeContainer"); con.innerHTML="";
+  const hasHtml = !!(extracted.html && extracted.html.trim());
+  const hasCss  = !!(extracted.css  && extracted.css.trim());
+  const hasJs   = !!(extracted.js   && extracted.js.trim());
+  const isCompleteHtmlOnly = hasHtml && !hasCss && !hasJs;
+  let types = [];
+  if (currentViewMode === 'complete' || isCompleteHtmlOnly) {
+    types = [{key:'html',icon:'🖥️',label:'Complete HTML',lang:'language-html',isComplete:true}];
+  } else {
+    types = [
+      {key:'html',icon:'📄',label:'HTML',lang:'language-html'},
+      {key:'css', icon:'🎨',label:'CSS', lang:'language-css'},
+      {key:'js',  icon:'⚡',label:'JavaScript',lang:'language-javascript'}
+    ];
+  }
+  let any=false;
+  types.forEach(t=>{
+    if (!extracted[t.key]||!extracted[t.key].trim()) return;
+    any=true;
+    const blk=document.createElement("div"); blk.className="ext-block";
+    blk.innerHTML=`
+      <div class="ext-block-header">
+        <div class="ext-block-title">${t.icon} ${t.label}</div>
+        <div class="ext-block-actions">
+          <button class="fab dl"   onclick="downloadFile('${t.key}'${t.isComplete?",'complete'":''})">⬇️ Download</button>
+          <button class="fab save" onclick="openSaveFileModal('${t.key}')">💾 Save</button>
+        </div>
+      </div>
+      <pre class="ext-pre"><code class="${t.lang}" id="extCode_${t.key}"></code></pre>
+    `;
+    con.appendChild(blk);
+    setTimeout(()=>{
+      const el=document.getElementById("extCode_"+t.key);
+      el.textContent=extracted[t.key]; delete el.dataset.highlighted; hljs.highlightElement(el);
+    },0);
+  });
+  if (!any) con.innerHTML="<p style='text-align:center;padding:30px;color:var(--text2);font-weight:600;'>No files extracted yet.</p>";
+  if(!document.getElementById("filesViewPage").classList.contains('active')) switchPage("filesViewPage");
+}
+
+/* ─── SAVE FILE MODAL ────────────────────────────────────────── */
+function openSaveFileModal(type) {
+  sfFileType=type; sfOpt='new'; sfVer='next'; sfSelListId=null;
+  const labels={html:'HTML',css:'CSS',js:'JavaScript'};
+  document.getElementById("sfmSub").innerText="Saving "+labels[type]+" file";
+  document.getElementById("sfOptNew").classList.add("sel"); document.getElementById("sfOptExist").classList.remove("sel");
+  document.getElementById("sfNewArea").style.display="block"; document.getElementById("sfExistArea").style.display="none";
+  document.getElementById("sfNewName").value="";
+  document.getElementById("saveFileModal").classList.add("show");
+}
+function sfSetOpt(o) {
+  sfOpt=o; loadLists();
+  if (o==='new') {
+    document.getElementById("sfOptNew").classList.add("sel"); document.getElementById("sfOptExist").classList.remove("sel");
+    document.getElementById("sfNewArea").style.display="block"; document.getElementById("sfExistArea").style.display="none";
+  } else {
+    document.getElementById("sfOptNew").classList.remove("sel"); document.getElementById("sfOptExist").classList.add("sel");
+    document.getElementById("sfNewArea").style.display="none"; document.getElementById("sfExistArea").style.display="block";
+    renderSfExistList();
+  }
+}
+function renderSfExistList() {
+  const con=document.getElementById("sfExistList"); con.innerHTML="";
+  if (!savedLists.length) { con.innerHTML="<p style='color:var(--text2);font-size:13px;text-align:center;padding:8px;font-weight:600;'>No saved lists</p>"; return; }
+  savedLists.forEach(l=>{
+    const it=document.createElement("div"); it.className="modal-file-item";
+    it.innerHTML=`<span>${l.name}</span><span style="font-size:11px;color:var(--text2);">${l.timestamp||''}</span>`;
+    it.onclick=()=>{ con.querySelectorAll(".modal-file-item").forEach(x=>x.classList.remove("selected")); it.classList.add("selected"); sfSelListId=l.id; };
+    con.appendChild(it);
+  });
+}
+function sfSetVer(v) {
+  sfVer=v;
+  document.getElementById("sfVerNext").classList.toggle("sel",v==='next');
+  document.getElementById("sfVerRepl").classList.toggle("sel",v==='repl');
+}
+function confirmSaveFile() {
+  loadLists();
+  const code=extracted[sfFileType];
+  if (!code||!code.trim()) { showToast("⚠️ No code to save."); closeModal('saveFileModal'); return; }
+  const labels={html:'HTML',css:'CSS',js:'JavaScript'};
+  if (sfOpt==='new') {
+    const name=document.getElementById("sfNewName").value.trim();
+    if (!name) { showToast("⚠️ Enter a list name."); return; }
+    const nw={id:Date.now(),name,timestamp:new Date().toLocaleString(),fileVersions:{
+      html:sfFileType==='html'?[{version:1,label:'v1',code,ts:new Date().toLocaleString()}]:[],
+      css: sfFileType==='css' ?[{version:1,label:'v1',code,ts:new Date().toLocaleString()}]:[],
+      js:  sfFileType==='js'  ?[{version:1,label:'v1',code,ts:new Date().toLocaleString()}]:[]
+    }};
+    savedLists.push(nw); saveLists();
+    showToast("✅ "+labels[sfFileType]+" saved to \""+name+"\" as v1!");
+  } else {
+    if (!sfSelListId) { showToast("⚠️ Select a list."); return; }
+    const list=savedLists.find(l=>l.id===sfSelListId); if (!list) return;
+    migrateList(list);
+    const vers=list.fileVersions[sfFileType];
+    if (sfVer==='next') {
+      const n=(vers.length?vers[vers.length-1].version:0)+1;
+      vers.push({version:n,label:'v'+n,code,ts:new Date().toLocaleString()});
+      showToast("✅ "+labels[sfFileType]+" saved as v"+n+" in \""+list.name+"\"!");
+    } else {
+      if (vers.length) { vers[vers.length-1].code=code; vers[vers.length-1].ts=new Date().toLocaleString(); showToast("✅ Latest version replaced!"); }
+      else { vers.push({version:1,label:'v1',code,ts:new Date().toLocaleString()}); showToast("✅ Saved as v1!"); }
+    }
+    saveLists();
+  }
+  closeModal('saveFileModal');
+}
+
+/* ─── SAVE ALL MODAL ─────────────────────────────────────────── */
+function openSaveAllModal() {
+  saOpt='new'; saVer='next'; saSelListId=null;
+  document.getElementById("saOptNew").classList.add("sel"); document.getElementById("saOptExist").classList.remove("sel");
+  document.getElementById("saNewArea").style.display="block"; document.getElementById("saExistArea").style.display="none";
+  document.getElementById("saNewName").value="";
+  document.getElementById("saveAllModal").classList.add("show");
+}
+function saSetOpt(o) {
+  saOpt=o; loadLists();
+  if (o==='new') {
+    document.getElementById("saOptNew").classList.add("sel"); document.getElementById("saOptExist").classList.remove("sel");
+    document.getElementById("saNewArea").style.display="block"; document.getElementById("saExistArea").style.display="none";
+  } else {
+    document.getElementById("saOptNew").classList.remove("sel"); document.getElementById("saOptExist").classList.add("sel");
+    document.getElementById("saNewArea").style.display="none"; document.getElementById("saExistArea").style.display="block";
+    renderSaExistList();
+  }
+}
+function renderSaExistList() {
+  const con=document.getElementById("saExistList"); con.innerHTML="";
+  if (!savedLists.length) { con.innerHTML="<p style='color:var(--text2);font-size:13px;text-align:center;padding:8px;font-weight:600;'>No saved lists</p>"; return; }
+  savedLists.forEach(l=>{
+    const it=document.createElement("div"); it.className="modal-file-item";
+    it.innerHTML=`<span>${l.name}</span><span style="font-size:11px;color:var(--text2);">${l.timestamp||''}</span>`;
+    it.onclick=()=>{ con.querySelectorAll(".modal-file-item").forEach(x=>x.classList.remove("selected")); it.classList.add("selected"); saSelListId=l.id; };
+    con.appendChild(it);
+  });
+}
+function saSetVer(v) {
+  saVer=v;
+  document.getElementById("saVerNext").classList.toggle("sel",v==='next');
+  document.getElementById("saVerRepl").classList.toggle("sel",v==='repl');
+}
+function confirmSaveAll() {
+  loadLists();
+  const any=extracted.html.trim()||extracted.css.trim()||extracted.js.trim();
+  if (!any) { showToast("⚠️ No extracted files."); closeModal('saveAllModal'); return; }
+  if (saOpt==='new') {
+    const name=document.getElementById("saNewName").value.trim();
+    if (!name) { showToast("⚠️ Enter a list name."); return; }
+    const nw={id:Date.now(),name,timestamp:new Date().toLocaleString(),fileVersions:{
+      html:extracted.html.trim()?[{version:1,label:'v1',code:extracted.html,ts:new Date().toLocaleString()}]:[],
+      css: extracted.css.trim() ?[{version:1,label:'v1',code:extracted.css, ts:new Date().toLocaleString()}]:[],
+      js:  extracted.js.trim()  ?[{version:1,label:'v1',code:extracted.js,  ts:new Date().toLocaleString()}]:[]
+    }};
+    savedLists.push(nw); saveLists(); showToast("✅ All files saved to \""+name+"\" as v1!");
+  } else {
+    if (!saSelListId) { showToast("⚠️ Select a list."); return; }
+    const list=savedLists.find(l=>l.id===saSelListId); if (!list) return;
+    migrateList(list);
+    ['html','css','js'].forEach(type=>{
+      if (!extracted[type]||!extracted[type].trim()) return;
+      const vers=list.fileVersions[type];
+      if (saVer==='next') {
+        const n=(vers.length?vers[vers.length-1].version:0)+1;
+        vers.push({version:n,label:'v'+n,code:extracted[type],ts:new Date().toLocaleString()});
+      } else {
+        if (vers.length) { vers[vers.length-1].code=extracted[type]; vers[vers.length-1].ts=new Date().toLocaleString(); }
+        else vers.push({version:1,label:'v1',code:extracted[type],ts:new Date().toLocaleString()});
+      }
+    });
+    saveLists(); showToast("✅ All files saved to \""+list.name+"\"!");
+  }
+  closeModal('saveAllModal');
+}
+
+/* ─── DOWNLOAD ───────────────────────────────────────────────── */
+function downloadFile(type, mode) {
+  const code=extracted[type]||"";
+  if (!code.trim()) { showToast("⚠️ No "+type.toUpperCase()+" to download."); return; }
+  const ext = (mode === 'complete') ? 'html' : type;
+  _dlPending = { code, ext, mime: type==='js'?"text/javascript":"text/"+ext };
+  document.getElementById("dlModalSub").innerText = "Name your "+(mode==='complete'?'Complete HTML':ext.toUpperCase())+" file";
+  document.getElementById("dlModalInput").value = "index."+ext;
+  document.getElementById("downloadNameModal").classList.add("show");
+}
+function confirmDownload() {
+  if (!_dlPending) { closeModal('downloadNameModal'); return; }
+  let name = document.getElementById("dlModalInput").value.trim();
+  if (!name) { showToast("⚠️ Enter a file name."); return; }
+  const ext = _dlPending.ext;
+  if (!name.toLowerCase().endsWith("."+ext)) name+="."+ext;
+  dlBlob(_dlPending.code, name, _dlPending.mime);
+  _dlPending = null;
+  closeModal('downloadNameModal');
+}
+function downloadAllFiles() {
+  let count=0;
+  ['html','css','js'].forEach(t=>{ if(extracted[t]&&extracted[t].trim()){ dlBlob(extracted[t],"index."+t,t==='js'?"text/javascript":"text/"+t); count++; } });
+  if (!count) showToast("⚠️ No files to download.");
+}
+function dlBlob(content,name,mime) {
+  const blob=new Blob([content],{type:mime}), url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+/* ─── SAVED LISTS PAGE ───────────────────────────────────────── */
+function showSavedLists() {
+  loadLists();
+  const con=document.getElementById("listsContainer"); con.innerHTML="";
+  if (!savedLists.length) {
+    con.innerHTML="<p style='text-align:center;margin-top:40px;color:var(--text2);font-size:14px;font-weight:600;'>No saved lists yet</p>";
+  } else {
+    savedLists.forEach(l=>{
+      const it=document.createElement("div"); it.className="list-item";
+      it.innerHTML=`
+        <div class="list-item-info" onclick="showListDetail(${l.id})">
+          <div class="list-item-title">${esc(l.name)}</div>
+          <div class="list-item-meta">${l.timestamp||''}</div>
+        </div>
+        <div class="list-item-actions">
+          <button class="icon-btn rename" onclick="promptRenameList(${l.id},'${escJs(l.name)}')" title="Rename list">✏️</button>
+          <button class="icon-btn danger" onclick="promptDelList(${l.id},'${escJs(l.name)}')" title="Delete list">🗑️</button>
+        </div>
+      `;
+      con.appendChild(it);
+    });
+  }
+  switchPage("savedListsPage");
+}
+
+function promptDelList(id,name) {
+  pendingDelete=()=>{ loadLists(); savedLists=savedLists.filter(l=>l.id!==id); saveLists(); closeModal('confirmModal'); showSavedLists(); };
+  document.getElementById("confirmMsg").innerText="Delete list \""+name+"\"? This cannot be undone.";
+  document.getElementById("confirmModal").classList.add("show");
+}
+
+function promptRenameList(id, currentName) {
+  _renameTarget = { type: 'list', listId: id };
+  document.getElementById("renameModalTitle").innerText = "Rename List";
+  document.getElementById("renameModalSub").innerText = "Current: " + currentName;
+  document.getElementById("renameModalLabel").innerText = "New List Name";
+  document.getElementById("renameModalInput").value = currentName;
+  document.getElementById("renameModal").classList.add("show");
+}
+
+function promptRenameVersion(listId, fileType, versionIdx, currentLabel) {
+  _renameTarget = { type: 'version', listId, fileType, versionIdx };
+  document.getElementById("renameModalTitle").innerText = "Rename Version";
+  document.getElementById("renameModalSub").innerText = "Current: " + currentLabel;
+  document.getElementById("renameModalLabel").innerText = "New Version Label";
+  document.getElementById("renameModalInput").value = currentLabel;
+  document.getElementById("renameModal").classList.add("show");
+}
+
+function confirmRename() {
+  const newName = document.getElementById("renameModalInput").value.trim();
+  if (!newName) { showToast("⚠️ Enter a name."); return; }
+  loadLists();
+  if (_renameTarget.type === 'list') {
+    const list = savedLists.find(l => l.id === _renameTarget.listId);
+    if (list) { list.name = newName; saveLists(); showToast("✅ List renamed to \""+newName+"\"!"); }
+  } else if (_renameTarget.type === 'version') {
+    const list = savedLists.find(l => l.id === _renameTarget.listId);
+    if (list) {
+      migrateList(list);
+      const vers = list.fileVersions[_renameTarget.fileType];
+      if (vers && vers[_renameTarget.versionIdx] !== undefined) {
+        vers[_renameTarget.versionIdx].label = newName;
+        saveLists(); showToast("✅ Version renamed to \""+newName+"\"!");
+      }
+    }
+  }
+  closeModal('renameModal');
+  _renameTarget = null;
+  if (document.getElementById("savedListsPage").classList.contains("active")) showSavedLists();
+  else if (document.getElementById("listDetailPage").classList.contains("active") && currentListId) showListDetail(currentListId);
+}
+
+/* ─── LIST DETAIL ────────────────────────────────────────────── */
+function showListDetail(id) {
+  currentListId=id; loadLists();
+  const list=savedLists.find(l=>l.id===id); if (!list) return;
+  migrateList(list);
+  document.getElementById("listDetailTitle").innerText=list.name;
+  ['html','css','js'].forEach(t=>{
+    const sel=document.getElementById("listVersionSelect"+t.charAt(0).toUpperCase()+t.slice(1));
+    sel.innerHTML='<option value="latest">🕐 Latest</option>';
+    const vers=list.fileVersions[t]||[];
+    vers.forEach(v=>{ const o=document.createElement("option"); o.value=v.label; o.innerText=v.label+" — "+v.ts; sel.appendChild(o); });
+    if (!vers.length) { sel.innerHTML='<option value="none">— none —</option>'; sel.disabled=true; }
+    else sel.disabled=false;
+  });
+  renderVersionFiles(list);
+  switchPage("listDetailPage");
+}
+
+function renderVersionFiles(list) {
+  const con=document.getElementById("listVersionsContainer"); con.innerHTML="";
+  const types=[
+    {key:'html',icon:'📄',label:'HTML',color:'var(--html-c)'},
+    {key:'css', icon:'🎨',label:'CSS', color:'var(--css-c)'},
+    {key:'js',  icon:'⚡',label:'JS',  color:'var(--js-c)'}
+  ];
+  let any=false;
+  types.forEach(t=>{
+    const vers=list.fileVersions[t.key]||[];
+    if (!vers.length) return;
+    any=true;
+    const sec=document.createElement("div"); sec.className="ver-section";
+    sec.innerHTML=`<div class="ver-section-title" style="color:${t.color}">${t.icon} ${t.label} <span class="ver-count">(${vers.length} version${vers.length>1?'s':''})</span></div>`;
+    vers.forEach((v,idx)=>{
+      const item=document.createElement("div"); item.className="ver-file-item";
+      item.innerHTML=`
+        <div class="ver-file-header">
+          <div class="ver-file-name">${t.icon} ${t.label} <span class="version-badge">${v.label}</span></div>
+          <div class="ver-file-actions">
+            <button class="ver-rename-btn" onclick="promptRenameVersion(${list.id},'${t.key}',${idx},'${escJs(v.label)}')">✏️ Rename</button>
+            <button class="ver-del-btn" onclick="promptDelVersion(${list.id},'${t.key}',${idx})">🗑️ Delete</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px;font-weight:600;">${v.ts||''}</div>
+      `;
+      sec.appendChild(item);
+    });
+    con.appendChild(sec);
+  });
+  if (!any) con.innerHTML="<p style='text-align:center;padding:20px;color:var(--text2);font-weight:600;'>No files in this list.</p>";
+}
+
+function promptDelVersion(listId,type,idx) {
+  pendingDelete=()=>{
+    loadLists();
+    const list=savedLists.find(l=>l.id===listId);
+    if (list&&list.fileVersions&&list.fileVersions[type]) { list.fileVersions[type].splice(idx,1); saveLists(); }
+    closeModal('confirmModal'); showListDetail(listId);
+  };
+  document.getElementById("confirmMsg").innerText="Delete this version? This cannot be undone.";
+  document.getElementById("confirmModal").classList.add("show");
+}
+
+function getFilesForVersion() {
+  loadLists();
+  const list=savedLists.find(l=>l.id===currentListId); if (!list) return null;
+  migrateList(list);
+  const selIds={html:'listVersionSelectHtml',css:'listVersionSelectCss',js:'listVersionSelectJs'};
+  const res={html:"",css:"",js:""};
+  ['html','css','js'].forEach(t=>{
+    const vers=list.fileVersions[t]||[];
+    if (!vers.length) return;
+    const selEl=document.getElementById(selIds[t]);
+    const sel=selEl?selEl.value:'latest';
+    if (sel==='latest'||sel==='none') res[t]=vers[vers.length-1].code||"";
+    else { const v=vers.find(x=>x.label===sel); res[t]=v?(v.code||""):(vers[vers.length-1].code||""); }
+  });
+  return res;
+}
+
+function viewListCombined() {
+  const f=getFilesForVersion(); if (!f) return;
+  let html=f.html||"<html><head></head><body></body></html>";
+  if (f.css) html=html.includes('</head>')?html.replace('</head>',"\n<style>\n"+f.css+"\n</style>\n</head>"):"<style>\n"+f.css+"\n</style>\n"+html;
+  if (f.js)  html=html.includes('</body>')?html.replace('</body>',"\n<script>\n"+f.js+"\n<\/script>\n</body>"):html+"\n<script>\n"+f.js+"\n<\/script>\n";
+  document.getElementById("frame").srcdoc=html;
+  document.getElementById("previewPopup").classList.add("show");
+}
+
+function downloadListCombined() {
+  const f=getFilesForVersion(); if (!f) return;
+  if (f.html) dlBlob(f.html,"index.html","text/html");
+  if (f.css)  dlBlob(f.css,"style.css","text/css");
+  if (f.js)   dlBlob(f.js,"script.js","text/javascript");
+}
+
+function closeListDetail() { showSavedLists(); }
+
+
+/* ─── EDIT PAGE ──────────────────────────────────────────────── */
+function startEditingFile(type) {
+  currentEditingFile=type; editUndoStack=[];
+  const labels={html:"HTML",css:"CSS",js:"JavaScript",complete:"Complete HTML"};
+  document.getElementById("editPageTitle").innerText="✏️ Edit "+labels[type];
+  document.getElementById("editCodeLabel").innerText=labels[type]+" Code";
+  
+  let activeCode = type === 'complete' ? extracted.html : extracted[type];
+  document.getElementById("codeEditorMain").value=activeCode||"";
+
+  document.getElementById("selHtmlBtn").style.display=(type==='html'||type==='complete')?'inline-flex':'none';
+  document.getElementById("selCssBtn").style.display=(type==='css'||type==='complete')?'inline-flex':'none';
+  document.getElementById("selJsBtn").style.display=(type==='js'||type==='complete')?'inline-flex':'none';
+  document.getElementById("findInput").value="";
+  document.getElementById("matchCount").innerText="";
+  document.getElementById("matchChips").innerHTML="";
+  document.getElementById("codeEditorMain").setAttribute('inputmode', 'none');
+  switchPage("editPage");
+}
+
+function selectAllCode() { const ta=document.getElementById("codeEditorMain"); ta.focus(); ta.setSelectionRange(0,ta.value.length); }
+
+function selectHTMLBlock() {
+  const ta=document.getElementById("codeEditorMain"); ta.focus();
+  const code=ta.value, pos=ta.selectionStart||0;
+  let openStart=-1;
+  for (let i=pos;i>=0;i--) { if(code[i]==='<'&&code[i+1]&&/[a-zA-Z]/.test(code[i+1])){openStart=i;break;} }
+  if (openStart===-1) { showToast("⚠️ Place cursor inside an HTML tag first."); return; }
+  const tagM=code.substring(openStart).match(/^<([a-zA-Z][a-zA-Z0-9-]*)/); if (!tagM) return;
+  const tagName=tagM[1]; let depth=0, closeIdx=-1;
+  const openRx=new RegExp('<'+tagName+'[\\s>]','gi'), closeRx=new RegExp('</'+tagName+'>','gi');
+  let i=openStart;
+  while (i<code.length) {
+    openRx.lastIndex=i; closeRx.lastIndex=i;
+    const om=openRx.exec(code), cm=closeRx.exec(code);
+    if (!cm) break;
+    if (om&&om.index<cm.index) { depth++; i=om.index+1; }
+    else { if(depth<=1){closeIdx=cm.index;break;} depth--; i=cm.index+1; }
+  }
+  if (closeIdx===-1) { showToast("⚠️ Could not find closing </"+tagName+">"); return; }
+  ta.setSelectionRange(openStart, closeIdx+tagName.length+3);
+}
+
+function selectCSSBlock() {
+  const ta=document.getElementById("codeEditorMain"); ta.focus();
+  const code=ta.value, pos=ta.selectionStart||0;
+  let braceStart=-1;
+  for (let i=pos;i<code.length;i++) { if(code[i]==='{'){braceStart=i;break;} }
+  if (braceStart===-1) { showToast("⚠️ Place cursor before a { block."); return; }
+  let depth=0, braceEnd=-1;
+  for (let i=braceStart;i<code.length;i++) {
+    if(code[i]==='{') depth++;
+    else if(code[i]==='}') { depth--; if(depth===0){braceEnd=i;break;} }
+  }
+  if (braceEnd===-1) { showToast("⚠️ No matching } found."); return; }
+  const lineStart=code.lastIndexOf('\n',braceStart-1)+1;
+  ta.setSelectionRange(lineStart,braceEnd+1);
+}
+function selectJSBlock() { selectCSSBlock(); }
+
+/* Editor actions */
+function deleteSelectedCode() {
+  const ta=document.getElementById("codeEditorMain");
+  const s=ta.selectionStart, e=ta.selectionEnd;
+  if(s!==e) { pushUndo(); ta.setRangeText("",s,e,"end"); }
+}
+function openAddCodeModal() {
+  document.getElementById("addCodeInp").value="";
+  document.getElementById("addCodeModal").classList.add("show");
+}
+function confirmAddCode(direction) {
+  const ta=document.getElementById("codeEditorMain");
+  const code=document.getElementById("addCodeInp").value;
+  if (!code) { closeModal('addCodeModal'); return; }
+  pushUndo();
+  const s=ta.selectionStart, e=ta.selectionEnd;
+  if (direction==='above') ta.setRangeText(code+"\n",s,s,"end");
+  else ta.setRangeText("\n"+code,e,e,"end");
+  closeModal('addCodeModal');
+}
+function openReplaceCodeModal() {
+  document.getElementById("replaceCodeInp").value="";
+  document.getElementById("replaceCodeModal").classList.add("show");
+}
+function confirmReplaceCode() {
+  const ta=document.getElementById("codeEditorMain");
+  const repCode=document.getElementById("replaceCodeInp").value;
+  pushUndo(); ta.setRangeText(repCode,ta.selectionStart,ta.selectionEnd,"end");
+  closeModal('replaceCodeModal');
+}
+function openSimilarCodeModal() {
+  document.getElementById("similarPasteInp").value="";
+  document.getElementById("similarList").innerHTML="<div style='color:var(--text2);text-align:center;padding:20px;font-size:13px;font-weight:600;'>Paste code above to search</div>";
+  document.getElementById("similarCodeModal").classList.add("show");
+}
+
+function handleSimilarInput() {
+  const query = document.getElementById("similarPasteInp").value.trim();
+  const listEl = document.getElementById("similarList"); 
+  listEl.innerHTML = "";
+  
+  if (query.length < 5) { 
+    listEl.innerHTML = "<div style='color:var(--text2);text-align:center;padding:20px;font-size:13px;font-weight:600;'>Paste more code to search…</div>"; 
+    return; 
+  }
+  
+  const content = document.getElementById("codeEditorMain").value;
+  let matches = [];
+  
+  try {
+    let forgivingPattern = rxEsc(query).replace(/\\\s|\\n|\\r|\\t|\s+/g, '\\s+');
+    const rx = new RegExp(forgivingPattern, 'gi');
+    let m;
+    while ((m = rx.exec(content)) !== null) { 
+      matches.push({ start: m.index, end: m.index + m[0].length }); 
+    }
+  } catch(e) {}
+  
+  if (matches.length === 0) { 
+    listEl.innerHTML = "<div style='color:var(--danger);text-align:center;padding:20px;font-size:13px;font-weight:700;'>No similar blocks found.</div>"; 
+    return; 
+  }
+  
+  matches.forEach((matchObj, i) => {
+    const idx = matchObj.start;
+    const item = document.createElement("div"); 
+    item.className = "similar-item";
+    const contextStart = Math.max(0, idx - 40);
+    const contextEnd = Math.min(content.length, matchObj.end + 40);
+    item.innerText = `Match ${i + 1}:\n...${content.substring(contextStart, contextEnd)}...`;
+    
+    item.onclick = () => {
+      const ta = document.getElementById("codeEditorMain"); 
+      ta.focus({ preventScroll: true });
+      ta.setSelectionRange(matchObj.start, matchObj.end);
+      
+      const textBefore = ta.value.substring(0, matchObj.start);
+      const linesBefore = textBefore.split('\n').length;
+      
+      // Exact math for standard textarea with wrap="off"
+      const lineHeight = parseFloat(getComputedStyle(ta).lineHeight) || 21.45;
+      ta.scrollTop = (linesBefore - 1) * lineHeight - (ta.clientHeight / 2);
+      
+      const currentLineText = textBefore.substring(textBefore.lastIndexOf('\n') + 1);
+      ta.scrollLeft = (currentLineText.length * 7.5) - (ta.clientWidth / 2);
+      
+      closeModal('similarCodeModal');
+    };
+    listEl.appendChild(item);
+  });
+}
+
+/* Undo */
+let _undoDebounce=null;
+function debouncedUndoPush() { clearTimeout(_undoDebounce); _undoDebounce=setTimeout(()=>{pushUndo();},800); }
+let editUndoStack=[], UNDO_MAX=50;
+function pushUndo() { const ta=document.getElementById("codeEditorMain"); editUndoStack.push(ta.value); if(editUndoStack.length>UNDO_MAX) editUndoStack.shift(); }
+function undoEdit() { 
+  if (!editUndoStack.length) return; 
+  const ta=document.getElementById("codeEditorMain"); 
+  ta.value=editUndoStack.pop(); 
+  doFind(); 
+}
+
+/* Find */
+let matchPositions=[], activeMatchIdx=-1;
+function doFind() {
+  const q=document.getElementById("findInput").value;
+  const ta=document.getElementById("codeEditorMain"), code=ta.value;
+  const mc=document.getElementById("matchCount"), chipsEl=document.getElementById("matchChips");
+  matchPositions=[]; activeMatchIdx=-1; chipsEl.innerHTML="";
+  if (!q) { mc.innerText=""; return; }
+  try {
+    const rx=new RegExp(rxEsc(q),'gi'); let m;
+    while ((m=rx.exec(code))!==null) matchPositions.push({start:m.index,end:m.index+m[0].length});
+    const count=matchPositions.length;
+    mc.innerText=count>0?count+" match"+(count>1?"es":"")+" found — tap to jump":"No matches";
+    mc.style.color=count>0?"var(--success)":"var(--danger)";
+    matchPositions.forEach((pos,i)=>{
+      const snippet=code.substring(Math.max(0,pos.start-12),Math.min(code.length,pos.end+12)).replace(/\n/g,' ');
+      const chip=document.createElement("span"); chip.className="match-chip";
+      chip.title="Jump to match "+(i+1);
+      chip.innerText=(i+1)+": …"+snippet.trim()+"…";
+      chip.onclick=()=>jumpToMatch(i);
+      chipsEl.appendChild(chip);
+    });
+  } catch(e) { mc.innerText="Invalid pattern"; mc.style.color="var(--danger)"; }
+}
+
+function jumpToMatch(idx) {
+  if (idx < 0 || idx >= matchPositions.length) return;
+  activeMatchIdx = idx;
+  const ta = document.getElementById("codeEditorMain");
+  const pos = matchPositions[idx];
+  
+  ta.focus({ preventScroll: true }); 
+  ta.setSelectionRange(pos.start, pos.end);
+  
+  const textBefore = ta.value.substring(0, pos.start);
+  const linesBefore = textBefore.split('\n').length;
+  
+  // Exact math for standard textarea with wrap="off"
+  const lineHeight = parseFloat(getComputedStyle(ta).lineHeight) || 21.45;
+  ta.scrollTop = (linesBefore - 1) * lineHeight - (ta.clientHeight / 2);
+  
+  const currentLineText = textBefore.substring(textBefore.lastIndexOf('\n') + 1);
+  ta.scrollLeft = (currentLineText.length * 7.5) - (ta.clientWidth / 2);
+  
+  document.querySelectorAll('.match-chip').forEach((c, i) => c.classList.toggle('active-chip', i === idx));
+}
+
+/* Save version */
+function saveEditAsNewVersion() {
+  const code=document.getElementById("codeEditorMain").value;
+  let targetFile = currentEditingFile === 'complete' ? 'html' : currentEditingFile;
+  extracted[targetFile] = code;
+  if (currentListId) {
+    loadLists();
+    const list=savedLists.find(l=>l.id===currentListId);
+    if (list) {
+      migrateList(list);
+      const vers=list.fileVersions[targetFile];
+      const n=(vers.length?vers[vers.length-1].version:0)+1;
+      vers.push({version:n,label:'v'+n,code,ts:new Date().toLocaleString()});
+      saveLists(); showToast("✅ Saved as v"+n+" in \""+list.name+"\"");
+    } else {
+      showToast("⚠️ List not found — code kept in session");
+    }
+  } else {
+    // Show custom modal instead of native prompt
+    _svnPending = (name) => {
+      if (name && name.trim()) {
+        loadLists();
+        const nw={id:Date.now(),name:name.trim(),timestamp:new Date().toLocaleString(),fileVersions:{
+          html:targetFile==='html'?[{version:1,label:'v1',code,ts:new Date().toLocaleString()}]:[],
+          css: targetFile==='css' ?[{version:1,label:'v1',code,ts:new Date().toLocaleString()}]:[],
+          js:  targetFile==='js'  ?[{version:1,label:'v1',code,ts:new Date().toLocaleString()}]:[]
+        }};
+        savedLists.push(nw); saveLists(); currentListId=nw.id;
+        showToast("✅ Saved to \""+name.trim()+"\" as v1!");
+      } else {
+        showToast("✅ Code updated in session only");
+      }
+    };
+    document.getElementById("svnInput").value="";
+    document.getElementById("saveVersionNameModal").classList.add("show");
+  }
+}
+function confirmSaveVersionName() {
+  const name = document.getElementById("svnInput").value.trim();
+  if (!name) { showToast("⚠️ Enter a list name."); return; }
+  closeModal('saveVersionNameModal');
+  if (_svnPending) { _svnPending(name); _svnPending=null; }
+}
+// Override the close of saveVersionNameModal to keep session
+document.getElementById("saveVersionNameModal").querySelector(".modal-close").addEventListener("click", function(){
+  closeModal('saveVersionNameModal');
+  if (_svnPending) { _svnPending(null); _svnPending=null; }
+});
+
+function cancelEdit() { if (currentListId) showListDetail(currentListId); else switchPage("homePage"); }
+
+/* ─── TWEEK PAGE ─────────────────────────────────────────────── */
+function showTweekPage() { switchPage("tweekPage"); }
+function showTweekModal(type) {
+  const m={html:"HTML Editor",css:"CSS Editor",js:"JavaScript Editor",complete:"Complete HTML Editor"};
+  document.getElementById("tweekModalTitle").innerText=m[type];
+  document.getElementById("tweekFileInput").dataset.type=type;
+  loadLists();
+  // Reset custom dropdowns
+  const listDd=document.getElementById("tweekListDropdown");
+  listDd.innerHTML="";
+  document.getElementById("tweekListSelect").value="";
+  document.getElementById("tweekListVal").textContent="Choose list…";
+  document.getElementById("tweekListVal").classList.add("placeholder");
+  document.getElementById("tweekFileDropdown").innerHTML="";
+  document.getElementById("tweekFileSelect").value="";
+  document.getElementById("tweekFileVal").textContent="Choose file…";
+  document.getElementById("tweekFileVal").classList.add("placeholder");
+  // Populate list options
+  const phOpt=document.createElement("div"); phOpt.className="csd-option placeholder-opt"; phOpt.textContent="Choose list…"; phOpt.dataset.value=""; listDd.appendChild(phOpt);
+  savedLists.forEach(l=>{
+    const o=document.createElement("div"); o.className="csd-option"; o.textContent=l.name; o.dataset.value=l.id;
+    o.onclick=()=>{ selectCustomOption('tweekList',String(l.id),l.name); updateTweekFileSelect(); };
+    listDd.appendChild(o);
+  });
+  document.getElementById("tweekModal").classList.add("show");
+}
+function toggleCustomSelect(name) {
+  const trigger=document.getElementById(name+"Trigger");
+  const dd=document.getElementById(name+"Dropdown");
+  const isOpen=dd.classList.contains("open");
+  // Close all open dropdowns
+  document.querySelectorAll(".custom-dropdown.open").forEach(d=>d.classList.remove("open"));
+  document.querySelectorAll(".custom-select-trigger.open").forEach(t=>t.classList.remove("open"));
+  if (!isOpen) { dd.classList.add("open"); trigger.classList.add("open"); }
+}
+function selectCustomOption(name, value, label) {
+  document.getElementById(name+"Select").value=value;
+  const valEl=document.getElementById(name+"Val");
+  valEl.textContent=label; valEl.classList.toggle("placeholder",!value);
+  document.querySelectorAll("#"+name+"Dropdown .csd-option").forEach(o=>o.classList.toggle("selected",o.dataset.value===value));
+  document.getElementById(name+"Dropdown").classList.remove("open");
+  document.getElementById(name+"Trigger").classList.remove("open");
+}
+// Close dropdowns when clicking outside
+document.addEventListener("click",function(e){
+  if (!e.target.closest(".custom-select-wrap")) {
+    document.querySelectorAll(".custom-dropdown.open").forEach(d=>d.classList.remove("open"));
+    document.querySelectorAll(".custom-select-trigger.open").forEach(t=>t.classList.remove("open"));
+  }
+});
+function updateTweekFileSelect() {
+  const id=parseInt(document.getElementById("tweekListSelect").value);
+  const fileDd=document.getElementById("tweekFileDropdown");
+  fileDd.innerHTML="";
+  document.getElementById("tweekFileSelect").value="";
+  document.getElementById("tweekFileVal").textContent="Choose file…";
+  document.getElementById("tweekFileVal").classList.add("placeholder");
+  if (!id) return;
+  const list=savedLists.find(l=>l.id===id); if (!list) return;
+  migrateList(list);
+  const fv=list.fileVersions;
+  const phOpt=document.createElement("div"); phOpt.className="csd-option placeholder-opt"; phOpt.textContent="Choose file…"; phOpt.dataset.value=""; fileDd.appendChild(phOpt);
+  if (fv.html&&fv.html.length) { const o=document.createElement("div"); o.className="csd-option"; o.textContent="HTML"; o.dataset.value="html"; o.onclick=()=>{ selectCustomOption('tweekFile','html','HTML'); loadTweekFile(); }; fileDd.appendChild(o); }
+  if (fv.css &&fv.css.length)  { const o=document.createElement("div"); o.className="csd-option"; o.textContent="CSS";  o.dataset.value="css";  o.onclick=()=>{ selectCustomOption('tweekFile','css','CSS'); loadTweekFile(); };  fileDd.appendChild(o); }
+  if (fv.js  &&fv.js.length)   { const o=document.createElement("div"); o.className="csd-option"; o.textContent="JS";   o.dataset.value="js";   o.onclick=()=>{ selectCustomOption('tweekFile','js','JS'); loadTweekFile(); };   fileDd.appendChild(o); }
+}
+function loadTweekFile() {
+  const id=parseInt(document.getElementById("tweekListSelect").value), type=document.getElementById("tweekFileSelect").value;
+  if (!id||!type) return;
+  const list=savedLists.find(l=>l.id===id); if (!list) return;
+  migrateList(list);
+  const vers=list.fileVersions[type]||[];
+  extracted[type]=vers.length?vers[vers.length-1].code:"";
+  const savedListId=list.id;
+  closeModal('tweekModal'); closePage('tweekPage');
+  let intentType = document.getElementById("tweekFileInput").dataset.type;
+  if (intentType === 'complete' && type === 'html') currentEditingFile = 'complete';
+  else currentEditingFile = type;
+  currentListId=savedListId;
+  startEditingFile(currentEditingFile);
+}
+function handleTweekUpload() {
+  const input = document.getElementById("tweekFileInput");
+  const file = input.files[0];
+  const type = input.dataset.type;
+  
+  if (!file) return;
+  
+  const r = new FileReader();
+  r.onload = function(e){
+    let mappedType = type === 'complete' ? 'html' : type;
+    extracted[mappedType] = e.target.result;
+    currentEditingFile = type; 
+    currentListId = null;
+    closeModal('tweekModal'); 
+    closePage('tweekPage');
+    startEditingFile(type);
+    
+    // Reset the input so it detects the same file next time
+    input.value = ""; 
+  };
+  r.readAsText(file);
+}
+
+/* ─── PREVIEW ────────────────────────────────────────────────── */
+function preview() {
+  let html=extracted.html||"<html><head></head><body></body></html>";
+  if (extracted.css) html=html.includes('</head>')?html.replace('</head>',"\n<style>\n"+extracted.css+"\n</style>\n</head>"):"<style>\n"+extracted.css+"\n</style>\n"+html;
+  if (extracted.js)  html=html.includes('</body>')?html.replace('</body>',"\n<script>\n"+extracted.js+"\n<\/script>\n</body>"):html+"\n<script>\n"+extracted.js+"\n<\/script>\n";
+  document.getElementById("frame").srcdoc=html;
+  document.getElementById("previewPopup").classList.add("show");
+}
+
+/* ─── PAGE / MODAL HELPERS ───────────────────────────────────── */
+function switchPage(id) { document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); document.getElementById(id).classList.add("active"); }
+function closePage(id) { currentListId=null; switchPage("homePage"); }
+function closePopup(id) { document.getElementById(id).classList.remove("show"); }
+function closeModal(id) { document.getElementById(id).classList.remove("show"); }
+function confirmDeleteAction() { if(pendingDelete){pendingDelete();} pendingDelete=null; }
+
+/* ─── UTILS ──────────────────────────────────────────────────── */
+function rxEsc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function escJs(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+let _toastTimer=null;
+function showToast(msg) {
+  const el=document.getElementById("toastEl");
+  el.innerText=msg; el.classList.add("show");
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>el.classList.remove("show"),2800);
+}
+
+/* ─── INIT ───────────────────────────────────────────────────── */
+loadLists();
+</script>
+</body>
+</html>
